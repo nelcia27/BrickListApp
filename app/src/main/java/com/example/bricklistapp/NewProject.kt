@@ -31,24 +31,14 @@ class NewProject : AppCompatActivity() {
         btnCheck.isEnabled=true
         btnAdd.isEnabled=false
         db = DatabaseHandler(baseContext)
-        /*try {
-            db!!.createDataBase()
-        } catch (e: IOException) {
-            throw Error("Error creating database")
-        }
-        try {
-            db!!.openDataBase()
-        } catch (e: SQLException) {
-            throw Error("Error opening database")
-        }*/
     }
 
     fun addNewProject(view: View){
         ifAdd=1
         val cg=CheckerAndGeneretor(db!!)
         cg.execute("")
-        val intent= Intent(this,MainActivity::class.java)
-        startActivity(intent)
+        //val intent= Intent(this,MainActivity::class.java)
+        //startActivity(intent)
     }
 
     fun checkURL(view: View){
@@ -83,6 +73,8 @@ class NewProject : AppCompatActivity() {
                     if(doc!=null) {
                         if (xmlloader(doc!!) == "OK") {
                             Toast.makeText(baseContext,"Succesfully load project data",Toast.LENGTH_LONG).show()
+                            val intent= Intent(baseContext,MainActivity::class.java)
+                            startActivity(intent)
                         } else {
                             Toast.makeText(baseContext,xmlloader(doc!!),Toast.LENGTH_LONG).show()
                         }

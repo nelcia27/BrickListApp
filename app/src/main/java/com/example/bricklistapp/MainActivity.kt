@@ -15,6 +15,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         db = DatabaseHandler(this)
         showProjects()
+        var listViewProjects = findViewById<ListView>(R.id.projectList)
+        listViewProjects.setOnItemClickListener{parent, view, position, id ->
+            Toast.makeText(this, "Clicked item :"+" "+position,Toast.LENGTH_SHORT).show()
+            this.startActivity(intent);
+            val intent= Intent(this, ProjectActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     override fun onResume() {
@@ -42,8 +49,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showProjects(){
-        var tmpNameArray = db!!.takeActiveInventoriesNames()
-        var listViewProjects = findViewById<ListView>(R.id.projectList)
+        val tmpNameArray = db!!.takeActiveInventoriesNames()
+        val listViewProjects = findViewById<ListView>(R.id.projectList)
         val listItems = arrayOfNulls<String>(tmpNameArray.size)
         for (i in 0 until tmpNameArray.size) {
             val tmp = tmpNameArray[i]
