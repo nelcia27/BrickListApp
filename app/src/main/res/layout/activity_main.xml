@@ -10,6 +10,7 @@
         android:id="@+id/projectList"
         android:layout_width="413dp"
         android:layout_height="554dp"
+        android:layout_marginTop="15dp"
         android:layout_marginBottom="51dp"
         app:layout_constraintBottom_toTopOf="@+id/btnNewProject"
         app:layout_constraintEnd_toEndOf="parent"

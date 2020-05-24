@@ -7,60 +7,75 @@
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="76dp"
-        android:layout_height="76dp"
+        android:layout_width="136dp"
+        android:layout_height="161dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="252dp"
-        android:layout_marginRight="252dp"
-        android:layout_marginBottom="636dp" />
+        android:layout_marginEnd="275dp"
+        android:layout_marginRight="275dp" />
 
     <TextView
         android:id="@+id/txtViewName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="271dp"
+        android:layout_height="60dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="97dp"
-        android:layout_marginRight="97dp"
-        android:layout_marginBottom="689dp"
+        android:layout_marginEnd="-4dp"
+        android:layout_marginRight="-4dp"
         android:text="TextView" />
 
     <TextView
         android:id="@+id/txtViewQuantity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="90dp"
+        android:layout_height="33dp"
+        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="11dp"
-        android:layout_marginRight="11dp"
-        android:layout_marginBottom="691dp"
-        android:text="TextView" />
+        android:layout_marginTop="70dp"
+        android:layout_marginEnd="64dp"
+        android:layout_marginRight="64dp"
+        android:text="TextView"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
     <Button
         android:id="@+id/btnPlus"
-        android:layout_width="18dp"
-        android:layout_height="wrap_content"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_below="@+id/txtViewQuantity"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="51dp"
-        android:layout_marginRight="51dp"
-        android:layout_marginBottom="620dp"
-        android:text="+" />
+        android:layout_marginTop="-41dp"
+        android:layout_marginEnd="222dp"
+        android:layout_marginRight="222dp"
+        android:background="#0d0dff"
+        android:text="+"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
     <Button
         android:id="@+id/btnMinus"
-        android:layout_width="18dp"
-        android:layout_height="wrap_content"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_below="@+id/txtViewQuantity"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginEnd="21dp"
-        android:layout_marginRight="21dp"
-        android:layout_marginBottom="617dp"
-        android:text="-" />
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="223dp"
+        android:layout_marginRight="223dp"
+        android:background="#0d0dff"
+        android:text="-"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+    <TextView
+        android:id="@+id/txtQuantity"
+        android:layout_width="20dp"
+        android:layout_height="33dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="69dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_toStartOf="@+id/txtViewQuantity"
+        android:layout_toLeftOf="@+id/txtViewQuantity"
+        android:text="TextView"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
 </RelativeLayout>

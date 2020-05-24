@@ -2,6 +2,7 @@ package com.example.bricklistapp
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.AsyncTask
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_new_project.*
@@ -23,11 +24,17 @@ class InventoryPart {
     var itemID: String? = null
     var quantityInSet: Int = 0
     var quantityInStore: Int = 0
-    var colorID: String? = null
+    var colorID: Int? = null
     var extra: String? = null
     var image: Bitmap? = null
+    var imageByte: ByteArray?=null
+    var src: String?=null
+    var srcLastChance: String?=null
+    var code: Int?=null
     var commentToShow: String? = null
-    var quantityToShow: String? = null
+    var quantityToShowSet: String? = null
+    var quantityToShowStore: Int?=null
+    var ifNewToXML: String="N"
 
     constructor(
         id: Int,
@@ -36,7 +43,7 @@ class InventoryPart {
         itemID: String,
         quantityInSet: Int,
         quantityInStore: Int,
-        colorID: String,
+        colorID: Int,
         extra: String
     ) {
         this.id = id
@@ -55,7 +62,7 @@ class InventoryPart {
         itemID: String,
         quantityInSet: Int,
         quantityInStore: Int,
-        colorID: String,
+        colorID: Int,
         extra: String
     ) {
         this.inventoryID = inventoryID
@@ -68,72 +75,4 @@ class InventoryPart {
     }
 
     constructor()
-
-    @SuppressLint("StaticFieldLeak")
-    inner class FotosCollecter(var db: DatabaseHandler, var code: String, color: Int?) : AsyncTask<String, Int, String>() {
-
-        var image: ByteArray? = null
-        var url1: String="https://www.lego.com/service/bricks/5/2/"+code
-        var url2: String="http://img.bricklink.com/P/"+color.toString()+"/"+code+".gif"
-        var url3: String="https://www.bricklink.com/PL/"+code+".jpg"
-
-        override fun onPostExecute(result: String) {
-            super.onPostExecute(result)
-            if (result.equals("OK")) {
-                db.saveImageToDatabase(image!!,code.toInt())
-            }else{
-                println("Nie znalazło")
-            }
-        }
-
-        override fun doInBackground(vararg params: String?): String {
-            try{
-                BufferedInputStream(URL(url1).content as InputStream).use {
-                    val img = ArrayList<Byte>()
-                    var current: Int
-                    while (true) {
-                        current = it.read()
-                        if (current == -1)
-                            break
-                        img.add(current.toByte())
-                    }
-                    image = img.toByteArray()
-                }
-                return "OK"
-            }catch (e: IOException){
-               try{
-                   BufferedInputStream(URL(url2).content as InputStream).use {
-                       val img = ArrayList<Byte>()
-                       var current: Int
-                       while (true) {
-                           current = it.read()
-                           if (current == -1)
-                               break
-                           img.add(current.toByte())
-                       }
-                       image = img.toByteArray()
-                   }
-                   return "OK"
-               }catch (e: IOException){
-                   try{
-                       BufferedInputStream(URL(url1).content as InputStream).use {
-                           val img = ArrayList<Byte>()
-                           var current: Int
-                           while (true) {
-                               current = it.read()
-                               if (current == -1)
-                                   break
-                               img.add(current.toByte())
-                           }
-                           image = img.toByteArray()
-                       }
-                       return "OK"
-                   }catch (e: IOException){
-                        return "NOT"
-                   }
-               }
-            }
-
-        }
-    }
 }

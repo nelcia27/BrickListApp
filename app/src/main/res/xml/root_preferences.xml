@@ -35,4 +35,14 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="XML">
+
+        <SwitchPreferenceCompat
+            app:key="attachment"
+            app:summaryOff="New"
+            app:summaryOn="Used"
+            app:title="Which type of element you want?" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

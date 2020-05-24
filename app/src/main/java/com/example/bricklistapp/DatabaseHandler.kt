@@ -1,5 +1,6 @@
 package com.example.bricklistapp
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
@@ -7,14 +8,23 @@ import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.AsyncTask
+import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.database.getBlobOrNull
+import androidx.core.database.getIntOrNull
 import com.readystatesoftware.sqliteasset.SQLiteAssetHelper
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
+import com.squareup.picasso.Picasso
+import java.io.*
+import java.net.URL
 import java.security.AccessController.getContext
 import java.sql.SQLException
 import kotlin.coroutines.coroutineContext
+import com.google.android.gms.common.util.IOUtils.toByteArray
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import com.squareup.picasso.Target
+import java.lang.Exception
 
 
 class DatabaseHandler : SQLiteAssetHelper {
@@ -41,43 +51,47 @@ class DatabaseHandler : SQLiteAssetHelper {
         return result
     }
 
-    fun changeQuantityForPlus(name: String){
+    fun changeQuantityForPlus(id: Int) : Boolean{
+        var res=false
         val db = this.readableDatabase
-        val query = "SELECT QuantityInSet, QuantityInStore FROM Inventories where Name=\""+name+"\""
+        val query = "SELECT QuantityInSet, QuantityInStore FROM InventoriesParts where id="+id
         val cursor = db.rawQuery(query, null)
         if (cursor.moveToFirst()) {
-            var fullSet=cursor.getInt(0)
+            val fullSet=cursor.getInt(0)
             var mySet=cursor.getInt(1)
-            if(fullSet>mySet+1){
+            if(fullSet>=mySet+1){
                 mySet+=1
-                val query1 = "update InventoriesParts set QuantityInStore="+mySet+" where Name=\"" + name + "\""
+                val query1 = "update InventoriesParts set QuantityInStore="+mySet+" where id="+id
                 db.execSQL(query1)
+                res=true
             }else{
                 Toast.makeText(mContext,"Quantity cannot be higher than quantity in set",Toast.LENGTH_LONG).show()
             }
-
             cursor.close()
-        }
+            }
         db.close()
+        return res
     }
 
-    fun changeQuantityForMinus(name: String){
+    fun changeQuantityForMinus(id: Int): Boolean{
+        var res=false
         val db = this.readableDatabase
-        val query = "SELECT QuantityInStore FROM Inventories where Name=\""+name+"\""
+        val query = "SELECT QuantityInStore FROM InventoriesParts where id="+id
         val cursor = db.rawQuery(query, null)
         if (cursor.moveToFirst()) {
             var mySet=cursor.getInt(0)
             if(mySet-1>=0){
                 mySet-=1
-                val query1 = "update InventoriesParts set QuantityInStore="+mySet+" where Name=\"" + name + "\""
+                val query1 = "update InventoriesParts set QuantityInStore="+mySet+" where id=" + id
                 db.execSQL(query1)
+                res=true
             }else{
                 Toast.makeText(mContext,"Quantity cannot be less than 0",Toast.LENGTH_LONG).show()
             }
             cursor.close()
         }
         db.close()
-
+        return res
     }
 
     fun updateLastAccessedOfInventory(name: String){
@@ -147,6 +161,7 @@ class DatabaseHandler : SQLiteAssetHelper {
         val db = this.writableDatabase
 
         db.insert("InventoriesParts", null, values)
+
         db.close()
     }
 
@@ -190,11 +205,11 @@ class DatabaseHandler : SQLiteAssetHelper {
 
     fun takeActiveInventoriesNames(): ArrayList<String> {
         val db = this.readableDatabase
-        val query = "SELECT Name FROM Inventories where Active=1"
+        val query = "SELECT Name FROM Inventories where Active=1 ORDER BY LastAccessed ASC"
         val cursor = db.rawQuery(query, null)
         var result: ArrayList<String> = ArrayList<String>()
         if (cursor.moveToFirst()) {
-            cursor.getString(0)
+            result.add(cursor.getString(0))
             while (cursor.moveToNext()) {
                 result.add(cursor.getString(0))
             }
@@ -204,13 +219,13 @@ class DatabaseHandler : SQLiteAssetHelper {
         return  result
     }
 
-    fun takeNotActiveInventoriesNames(): ArrayList<String> {
+    fun takeAllInventoriesNames(): ArrayList<String> {
         val db = this.readableDatabase
-        val query = "SELECT Name FROM Inventories where Active=0"
+        val query = "SELECT Name FROM Inventories ORDER BY LastAccessed ASC"
         val cursor = db.rawQuery(query, null)
         var result: ArrayList<String> = ArrayList<String>()
         if (cursor.moveToFirst()) {
-            cursor.getString(0)
+            result.add(cursor.getString(0))
             while (cursor.moveToNext()) {
                 result.add(cursor.getString(0))
             }
@@ -220,92 +235,139 @@ class DatabaseHandler : SQLiteAssetHelper {
         return  result
     }
 
-    fun collectInfoAndFoto(invp: InventoryPart): InventoryPart{
-        val db = this.readableDatabase
-        val query="SELECT Image FROM Codes where ItemID=\""+invp.itemID+"\" and ColorID=\""+invp.colorID+"\""
-        val cursor = db.rawQuery(query, null)
-        val blob: ByteArray?
-        if (cursor.moveToFirst()) {
-            blob = cursor.getBlob(0)
-            if (blob != null) {
-                invp.image = BitmapFactory.decodeByteArray(blob, 0, blob.size)
-            }
-            cursor.close()
-        }else{
-            val q="SELECT Code FROM Codes where ItemID=\""+invp.itemID+"\" and ColorID=\""+invp.colorID+"\""
-            val c = db.rawQuery(q, null)
-            if(c.moveToFirst()){
-                invp.FotosCollecter(this,c.getString(0),invp.colorID!!.toInt())
-                c.close()
-            }
+    fun collectInfoAndFoto(invp: InventoryPart): InventoryPart?{
+        val db = this.writableDatabase
 
+        var comment=""
+        var itemID=0
+        val query="SELECT Name, NamePL, id FROM Parts where Code=\""+invp.itemID+"\""
+        val cursor = db.rawQuery(query, null)
+        if(cursor.moveToFirst()){
+            if(cursor.getString(1)!=null){
+                comment=cursor.getString(1)
+            }else{
+                comment=cursor.getString(0)
+            }
+            itemID=cursor.getInt(2)
+            cursor.close()
         }
 
-        var comment: String?=null
-        val query1="SELECT NamePL FROM Parts where TypeID=\""+invp.typeID+"\""
+        var comment1=""
+        var colorID=0
+        val query1="SELECT Name, NamePL, id FROM Colors where Code="+invp.colorID
         val cursor1 = db.rawQuery(query1, null)
-        if (cursor1.moveToFirst()) {
-            if(cursor1.getString(0)!=null){
-                comment=cursor1.getString(0)
+        if(cursor1.moveToFirst()){
+            if(cursor1.getString(1)!=null){
+                comment1=cursor1.getString(1)
             }else{
-                val query2="SELECT Name FROM Parts where TypeID=\""+invp.typeID+"\""
-                val cursor2 = db.rawQuery(query2, null)
-                if(cursor2.moveToFirst()){
-                    comment=cursor2.getString(0)
-                    cursor2.close()
-                }
+                comment1=cursor1.getString(0)
             }
-
+            colorID=cursor1.getInt(2)
             cursor1.close()
         }
 
-        var comment1: String?=null
-        val query2="SELECT NamePL FROM Colors where Code=\""+invp.colorID+"\""
-        val cursor2 = db.rawQuery(query2, null)
-        if (cursor2.moveToFirst()) {
-            if(cursor2.getString(0)!=null){
-                comment1=cursor2.getString(0)
-            }else{
-                val query3="SELECT Name FROM Colors where Code=\""+invp.colorID+"\""
-                val cursor3 = db.rawQuery(query3, null)
-                if(cursor3.moveToFirst()){
-                    comment1=cursor3.getString(0)
-                    cursor3.close()
-                }
+        val queryImg="SELECT Image, Code FROM Codes where ItemID="+itemID+" and ColorID="+colorID
+        val cursorImg = db.rawQuery(queryImg, null)
+        val img: ByteArray?
+        if(cursorImg.moveToFirst()){
+            img=cursorImg.getBlobOrNull(0)
+            if(img!=null){
+                invp.image=BitmapFactory.decodeByteArray(img, 0, img.size)
+            }else if(cursorImg.getIntOrNull(1)!=null){
+                val url="https://www.lego.com/service/bricks/5/2/"+cursorImg.getInt(1).toString()
+                invp.src=url
+                invp.code=cursorImg.getInt(1)
             }
-            cursor1.close()
+            cursorImg.close()
+        }else{
+            val queryTmp="SELECT Max(id) FROM Codes"
+            val cursorTmp = db.rawQuery(queryTmp, null)
+            var id=0
+            if(cursorTmp.moveToFirst()){
+                id=cursorTmp.getInt(0)
+                cursorTmp.close()
+            }
+            id+=1
+            val queryTmp1="SELECT Max(Code) FROM Codes"
+            val cursorTmp1 = db.rawQuery(queryTmp1, null)
+            var code=0
+            if(cursorTmp1.moveToFirst()){
+                code=cursorTmp1.getInt(0)
+                cursorTmp1.close()
+            }
+            id+=1
+            code+=1
+            val values = ContentValues()
+            values.put("id", id)
+            values.put("ItemID", itemID)
+            values.put("ColorID", colorID)
+            values.put("Code",code)
+            db.insert("Codes", null, values)
+            val url1="http://img.bricklink.com/P/"+colorID.toString()+"/"+invp.itemID+".gif"
+            invp.src=url1
+            val url2="https://www.bricklink.com/PL/"+invp.itemID+".jpg"
+            invp.srcLastChance=url2
+            invp.code=code
         }
-
-        val query4="SELECT Code FROM Codes where ItemID=\""+invp.itemID+"\" and ColorID=\""+invp.colorID+"\""
-        val cursor4 = db.rawQuery(query4, null)
-        var comment2: String?=null
-        if (cursor4.moveToFirst()) {
-            comment2 = cursor.getInt(0).toString()
-            cursor4.close()
-        }
-
-        invp.commentToShow="aaaa"//comment!!+" "+comment1!!+" ["+comment2!!+"]"
-        invp.quantityToShow=invp.quantityInStore.toString()+" of "+invp.quantityInSet.toString()
 
         db.close()
+
+        invp.commentToShow=comment+" "+comment1+" ["+invp.itemID+"]"
+        invp.quantityToShowSet=" of "+invp.quantityInSet.toString()
+        invp.quantityToShowStore=invp.quantityInStore
+
         return invp
     }
 
-    fun prepareToShowProject(name: String): ArrayList<InventoryPart>{
+    fun prepareToShowProject(name: String): ArrayList<InventoryPart> {
         val db = this.readableDatabase
-        val query = "SELECT id FROM Inventories where Name=\"" +name+"\""
+        val query = "SELECT id FROM Inventories where Name=\"" + name + "\""
         val cursor = db.rawQuery(query, null)
         var listToShow: ArrayList<InventoryPart> = ArrayList<InventoryPart>()
-        if(cursor.moveToFirst()){
-            val code=cursor.getInt(0)
-            val query1 = "SELECT * FROM InventoriesParts where InventoryID="+code
+        if (cursor.moveToFirst()) {
+            val code = cursor.getInt(0)
+            val query1 = "SELECT * FROM InventoriesParts where InventoryID=" + code
             val cursor1 = db.rawQuery(query1, null)
-            if(cursor1.moveToFirst()){
-                var invp=InventoryPart(cursor1.getInt(1),cursor1.getString(2),cursor1.getString(3),cursor1.getInt(4),cursor1.getInt(5),cursor1.getString(6),cursor1.getString(7))
-                listToShow.add(this.collectInfoAndFoto(invp))
-                while(cursor1.moveToNext()){
-                    invp=InventoryPart(cursor1.getInt(1),cursor1.getString(2),cursor1.getString(3),cursor1.getInt(4),cursor1.getInt(5),cursor1.getString(6),cursor1.getString(7))
-                    listToShow.add(this.collectInfoAndFoto(invp))
+            if (cursor1.moveToFirst()) {
+                var invp = InventoryPart(
+                    cursor1.getInt(0),
+                    cursor1.getInt(1),
+                    cursor1.getString(2),
+                    cursor1.getString(3),
+                    cursor1.getInt(4),
+                    cursor1.getInt(5),
+                    cursor1.getInt(6),
+                    cursor1.getString(7)
+                )
+                if (this.collectInfoAndFoto(invp) != null) {
+                    listToShow.add(this.collectInfoAndFoto(invp)!!)
+                } else {
+                    Toast.makeText(
+                        mContext,
+                        "Element not found in database",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                while (cursor1.moveToNext()) {
+                    invp = InventoryPart(
+                        cursor1.getInt(0),
+                        cursor1.getInt(1),
+                        cursor1.getString(2),
+                        cursor1.getString(3),
+                        cursor1.getInt(4),
+                        cursor1.getInt(5),
+                        cursor1.getInt(6),
+                        cursor1.getString(7)
+                    )
+                    if (this.collectInfoAndFoto(invp) != null) {
+                        listToShow.add(this.collectInfoAndFoto(invp)!!)
+                    } else {
+                        Toast.makeText(
+                            mContext,
+                            "Element not found in database",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
                 cursor1.close()
             }
@@ -315,15 +377,12 @@ class DatabaseHandler : SQLiteAssetHelper {
         return listToShow
     }
 
-    fun saveImageToDatabase(image : ByteArray, code: Int){
+    fun saveImageToDatabase(image: ByteArray, code: Int) {
         val db = this.writableDatabase
-        val query = "update Codes set Image=\"" + image + "\""+" where code="+code
+        val query = "update Codes set Image=\"" + image + "\"" + " where code=" + code
         db.execSQL(query)
         db.close()
     }
-
-
-
 
 
 }

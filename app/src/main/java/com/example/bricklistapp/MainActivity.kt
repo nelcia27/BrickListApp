@@ -7,19 +7,24 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.Toast
+import androidx.core.view.get
 
 class MainActivity : AppCompatActivity() {
     var db: DatabaseHandler?=null
+    var showArchive="0"
+    var onlyNewElem="1"
+    var url="http://fcds.cs.put.poznan.pl/MyWeb/BL/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         db = DatabaseHandler(this)
         showProjects()
-        var listViewProjects = findViewById<ListView>(R.id.projectList)
+        val listViewProjects = findViewById<ListView>(R.id.projectList)
         listViewProjects.setOnItemClickListener{parent, view, position, id ->
-            Toast.makeText(this, "Clicked item :"+" "+position,Toast.LENGTH_SHORT).show()
-            this.startActivity(intent);
+            db!!.updateLastAccessedOfInventory(listViewProjects.getItemAtPosition(position).toString())
             val intent= Intent(this, ProjectActivity::class.java)
+            intent.putExtra("name",listViewProjects.getItemAtPosition(position).toString())
+            intent.putExtra("onlyNew",onlyNewElem)
             startActivity(intent)
         }
     }
@@ -34,22 +39,29 @@ class MainActivity : AppCompatActivity() {
         showProjects()
 
     }
-    fun editProject(view: View){
-        Toast.makeText(this,"Powinno się edytowac projekt",Toast.LENGTH_SHORT).show()
-    }
 
     fun addProject(view: View){
         val intent= Intent(this,NewProject::class.java)
+        intent.putExtra("url",url)
         startActivity(intent)
     }
 
     fun goToSettings(view: View){
         val intent= Intent(this,SettingsActivity::class.java)
+        intent.putExtra("url",url)
+        intent.putExtra("archive",showArchive)
+        intent.putExtra("onlyNew",onlyNewElem)
         startActivity(intent)
     }
 
     fun showProjects(){
-        val tmpNameArray = db!!.takeActiveInventoriesNames()
+        val tmpNameArray: ArrayList<String>
+        if(showArchive.equals("0")){
+            tmpNameArray = db!!.takeActiveInventoriesNames()
+        }else{
+            tmpNameArray =db!!.takeAllInventoriesNames()
+
+        }
         val listViewProjects = findViewById<ListView>(R.id.projectList)
         val listItems = arrayOfNulls<String>(tmpNameArray.size)
         for (i in 0 until tmpNameArray.size) {

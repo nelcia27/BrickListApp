@@ -21,6 +21,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 class NewProject : AppCompatActivity() {
     var urlPost: String?=null
+    var urlPrev: String?=null
     var name: String?=null
     var ifAdd: Int=0
     var db: DatabaseHandler?=null
@@ -30,15 +31,22 @@ class NewProject : AppCompatActivity() {
         setContentView(R.layout.activity_new_project)
         btnCheck.isEnabled=true
         btnAdd.isEnabled=false
+        urlPrev=intent.getStringExtra("url")
         db = DatabaseHandler(baseContext)
+        val actionbar = supportActionBar
+        actionbar!!.title = "New Project"
+        actionbar.setDisplayHomeAsUpEnabled(true)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 
     fun addNewProject(view: View){
         ifAdd=1
         val cg=CheckerAndGeneretor(db!!)
         cg.execute("")
-        //val intent= Intent(this,MainActivity::class.java)
-        //startActivity(intent)
     }
 
     fun checkURL(view: View){
@@ -52,8 +60,7 @@ class NewProject : AppCompatActivity() {
 
     @SuppressLint("StaticFieldLeak")
     private inner class CheckerAndGeneretor(var db: DatabaseHandler): AsyncTask<String, Int, String>() {
-        var urlInventory =
-            "http://fcds.cs.put.poznan.pl/MyWeb/BL/" + urlPost + ".xml"
+        var urlInventory = urlPrev+ urlPost + ".xml"
         var doc: Document?=null
 
         override fun onPreExecute() {
@@ -76,7 +83,11 @@ class NewProject : AppCompatActivity() {
                             val intent= Intent(baseContext,MainActivity::class.java)
                             startActivity(intent)
                         } else {
-                            Toast.makeText(baseContext,xmlloader(doc!!),Toast.LENGTH_LONG).show()
+                            editProjectName.isEnabled=true
+                            editURLElem.isEnabled=true
+                            btnCheck.isEnabled = true
+                            btnAdd.isEnabled = false
+                            Toast.makeText(baseContext,"Fail to load project data",Toast.LENGTH_LONG).show()
                         }
                         ifAdd=0
                     }
@@ -86,7 +97,7 @@ class NewProject : AppCompatActivity() {
                 editURLElem.isEnabled=true
                 btnCheck.isEnabled = true
                 btnAdd.isEnabled = false
-                Toast.makeText(baseContext,result,Toast.LENGTH_LONG).show()
+                Toast.makeText(baseContext,"Check URL, because project was not found",Toast.LENGTH_LONG).show()
             }
         }
 
@@ -111,62 +122,67 @@ class NewProject : AppCompatActivity() {
         }
 
         private fun xmlloader(document: Document) :String{
-            try {
-                val inventory= Inventory(db.maxInventoryNum()+1, name!!, 1, 0)
+            if(db.checkIfInventoryExists(name!!)==false) {
                 try {
-                    db.addInventory(inventory)
-                }catch (e: Exception){
-                    Toast.makeText(baseContext,"Problem"+e.message.toString(),Toast.LENGTH_LONG).show()
-                }
-                val nList = document.getElementsByTagName("ITEM")
-                for (i in 0 until nList.length) {
-                    val itemNode: Node = nList.item(i)
-                    if (itemNode.nodeType == Node.ELEMENT_NODE) {
-                        val elem = itemNode as Element
-                        val children = elem.childNodes
-                        val item = InventoryPart()
-                        for (j in 0 until children.length) {
-                            val node = children.item(j)
-                            if (node is Element) {
-                                when (node.nodeName) {
-                                    "ITEMTYPE" -> {
-                                        item.typeID = node.textContent
-                                    }
-                                    "ITEMID" -> {
-                                        item.itemID = node.textContent
-                                    }
-                                    "QTY" -> {
-                                        item.quantityInSet = node.textContent.toInt()
-                                    }
-                                    "COLOR" -> {
-                                        item.colorID = node.textContent
-                                    }
-                                    "EXTRA" -> {
-                                        if(node.textContent == "N")
-                                            item.extra = node.textContent
-                                        else
-                                            item.extra = "0"
-                                    }
-                                    "ALTERNATE" -> {
-                                        if(node.textContent == "N") {
-                                            item.id = db.maxInventoryPartNum()+1
-                                            item.inventoryID=db.maxInventoryNum()
-                                            item.quantityInStore=0
-                                            db.addInventoryPart(item)
+                    val inventory = Inventory(db.maxInventoryNum() + 1, name!!, 1, 0)
+                    try {
+                        db.addInventory(inventory)
+                        val nList = document.getElementsByTagName("ITEM")
+                        for (i in 0 until nList.length) {
+                            val itemNode: Node = nList.item(i)
+                            if (itemNode.nodeType == Node.ELEMENT_NODE) {
+                                val elem = itemNode as Element
+                                val children = elem.childNodes
+                                val item = InventoryPart()
+                                for (j in 0 until children.length) {
+                                    val node = children.item(j)
+                                    if (node is Element) {
+                                        when (node.nodeName) {
+                                            "ITEMTYPE" -> {
+                                                item.typeID = node.textContent
+                                            }
+                                            "ITEMID" -> {
+                                                item.itemID = node.textContent
+                                            }
+                                            "QTY" -> {
+                                                item.quantityInSet = node.textContent.toInt()
+                                            }
+                                            "COLOR" -> {
+                                                item.colorID = node.textContent.toInt()
+                                            }
+                                            "EXTRA" -> {
+                                                if (node.textContent == "N")
+                                                    item.extra = node.textContent
+                                                else
+                                                    item.extra = "0"
+                                            }
+                                            "ALTERNATE" -> {
+                                                if (node.textContent == "N") {
+                                                    item.id = db.maxInventoryPartNum() + 1
+                                                    item.inventoryID = db.maxInventoryNum()
+                                                    item.quantityInStore = 0
+                                                    db.addInventoryPart(item)
 
+                                                }
+
+                                            }
                                         }
-
                                     }
                                 }
                             }
                         }
+                        return "OK"
+                    } catch (e: Exception) {
+
                     }
+                } catch (e: Exception) {
+                    return "NOT"
                 }
-                return "OK"
-            }catch (e: Exception){
-                Toast.makeText(baseContext,e.message.toString(),Toast.LENGTH_LONG).show()
-                return e.message.toString()
+            }else{
+                Toast.makeText(baseContext,"This project already exists",Toast.LENGTH_LONG).show()
+                return "NOT"
             }
+            return "NOT"
         }
 
 
