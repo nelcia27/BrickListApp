@@ -1,36 +1,16 @@
 package com.example.bricklistapp
 
-import android.annotation.SuppressLint
+
 import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteException
-import android.database.sqlite.SQLiteOpenHelper
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.AsyncTask
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.database.getBlobOrNull
 import androidx.core.database.getIntOrNull
 import com.readystatesoftware.sqliteasset.SQLiteAssetHelper
-import com.squareup.picasso.Picasso
-import java.io.*
-import java.net.URL
-import java.security.AccessController.getContext
-import java.sql.SQLException
-import kotlin.coroutines.coroutineContext
-import com.google.android.gms.common.util.IOUtils.toByteArray
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
-import com.squareup.picasso.Target
-import java.lang.Exception
-
 
 class DatabaseHandler : SQLiteAssetHelper {
 
-    private val DATABASE_VERSION = 1
-    private val DATABASE_NAME = "BrickList.db"
     private val mContext: Context
 
     constructor(context: Context) : super(context, "BrickList.db", null, 1) {
@@ -103,17 +83,26 @@ class DatabaseHandler : SQLiteAssetHelper {
         db.close()
     }
 
-    fun achivizeInventory(name : String){
+    fun archivizeInventory(name : String){
         val db = this.writableDatabase
-        val query = "update Inventories set Active=0 where Name=\"" + name + "\""
-        db.execSQL(query)
-        db.close()
-    }
-
-    fun makeNotArchived(name: String){
-        val db = this.writableDatabase
-        val query = "update Inventories set Active=0 where Name=\"" + name + "\""
-        db.execSQL(query)
+        val qtmp="SELECT Active FROM Inventories where Name=\""+name+"\""
+        val cursor=db.rawQuery(qtmp,null)
+        val type: Int
+        if(cursor.moveToFirst()){
+            type=cursor.getInt(0)
+            cursor.close()
+            var query=""
+            var comm=""
+            if(type==1){
+                query = "update Inventories set Active=0 where Name=\"" + name + "\""
+                comm="Project archived"
+            }else{
+                query = "update Inventories set Active=1 where Name=\"" + name + "\""
+                comm="Project unarchived"
+            }
+            db.execSQL(query)
+            Toast.makeText(mContext,comm,Toast.LENGTH_LONG).show()
+        }
         db.close()
     }
 
@@ -126,9 +115,9 @@ class DatabaseHandler : SQLiteAssetHelper {
             num=cursor.getInt(0)
             cursor.close()
         }
-        val query1 = "delete Inventories where Name=\"" + name + "\""
+        val query1 = "delete from Inventories where Name=\"" + name + "\""
         if(num!=null){
-            val query2 = "delete InventoriesParts where InventoryID=" + num
+            val query2 = "delete from InventoriesParts where InventoryID=" + num
             db.execSQL(query2)
         }
         db.execSQL(query1)
@@ -245,7 +234,7 @@ class DatabaseHandler : SQLiteAssetHelper {
         if(cursor.moveToFirst()){
             if(cursor.getString(1)!=null){
                 comment=cursor.getString(1)
-            }else{
+            }else if(cursor.getString(0)!=null){
                 comment=cursor.getString(0)
             }
             itemID=cursor.getInt(2)
@@ -259,7 +248,7 @@ class DatabaseHandler : SQLiteAssetHelper {
         if(cursor1.moveToFirst()){
             if(cursor1.getString(1)!=null){
                 comment1=cursor1.getString(1)
-            }else{
+            }else if(cursor1.getString(0)!=null){
                 comment1=cursor1.getString(0)
             }
             colorID=cursor1.getInt(2)
@@ -312,6 +301,11 @@ class DatabaseHandler : SQLiteAssetHelper {
 
         db.close()
 
+        if(comment.equals("(Not Applicable)")){
+            invp.commentToShow=""
+            invp.quantityToShowSet=""
+            invp.quantityToShowStore=0
+        }
         invp.commentToShow=comment+" "+comment1+" ["+invp.itemID+"]"
         invp.quantityToShowSet=" of "+invp.quantityInSet.toString()
         invp.quantityToShowStore=invp.quantityInStore
@@ -326,7 +320,7 @@ class DatabaseHandler : SQLiteAssetHelper {
         var listToShow: ArrayList<InventoryPart> = ArrayList<InventoryPart>()
         if (cursor.moveToFirst()) {
             val code = cursor.getInt(0)
-            val query1 = "SELECT * FROM InventoriesParts where InventoryID=" + code
+            val query1 = "SELECT * FROM InventoriesParts where InventoryID=" + code+" ORDER BY QuantityInStore,QuantityInSet"
             val cursor1 = db.rawQuery(query1, null)
             if (cursor1.moveToFirst()) {
                 var invp = InventoryPart(
@@ -341,12 +335,6 @@ class DatabaseHandler : SQLiteAssetHelper {
                 )
                 if (this.collectInfoAndFoto(invp) != null) {
                     listToShow.add(this.collectInfoAndFoto(invp)!!)
-                } else {
-                    Toast.makeText(
-                        mContext,
-                        "Element not found in database",
-                        Toast.LENGTH_SHORT
-                    ).show()
                 }
                 while (cursor1.moveToNext()) {
                     invp = InventoryPart(
@@ -361,12 +349,6 @@ class DatabaseHandler : SQLiteAssetHelper {
                     )
                     if (this.collectInfoAndFoto(invp) != null) {
                         listToShow.add(this.collectInfoAndFoto(invp)!!)
-                    } else {
-                        Toast.makeText(
-                            mContext,
-                            "Element not found in database",
-                            Toast.LENGTH_SHORT
-                        ).show()
                     }
                 }
                 cursor1.close()

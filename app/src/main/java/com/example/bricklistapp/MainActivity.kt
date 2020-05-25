@@ -1,5 +1,6 @@
 package com.example.bricklistapp
 
+import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -31,13 +32,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        onActivityResult(101,Activity.RESULT_OK,intent)
         showProjects()
     }
 
     override fun onRestart() {
         super.onRestart()
+        //onActivityResult(101,Activity.RESULT_OK,intent)
         showProjects()
 
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?){
+        super.onActivityResult(requestCode, resultCode, data)
+        if(requestCode == 101 && resultCode == Activity.RESULT_OK && data != null){
+            url = data.extras!!.getString("url")!!
+            showArchive=data.extras!!.getString("archive")!!
+            onlyNewElem=data.extras!!.getString("onlyNew")!!
+        }
     }
 
     fun addProject(view: View){
@@ -51,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra("url",url)
         intent.putExtra("archive",showArchive)
         intent.putExtra("onlyNew",onlyNewElem)
-        startActivity(intent)
+        startActivityForResult(intent,101)
     }
 
     fun showProjects(){

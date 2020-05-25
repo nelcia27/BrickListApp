@@ -12,10 +12,4 @@ class Inventory {
         this.active=active
         this.lastAccessed=lastAccessed
     }
-
-    constructor(name: String, active: Int, lastAccessed: Int) {
-        this.name = name
-        this.active=active
-        this.lastAccessed=lastAccessed
-    }
 }

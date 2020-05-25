@@ -2,6 +2,7 @@ package com.example.bricklistapp
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,7 +26,8 @@ class ProjectListAdapter: BaseAdapter {
     var src1: ArrayList<String?> = ArrayList<String?>()
     var src2: ArrayList<String?> = ArrayList<String?>()
     var codes: ArrayList<Int?> = ArrayList<Int?>()
-    constructor (context: Context , db: DatabaseHandler, dataN:  ArrayList<String>, dataQ:  ArrayList<String>,dataQS: ArrayList<Int>, ids: ArrayList<Int>,imgs: ArrayList<Bitmap?>,src1: ArrayList<String?>, src2: ArrayList<String?>, codes: ArrayList<Int?>){
+    var  quantitiesInSet: ArrayList<Int> = ArrayList<Int>()
+    constructor (context: Context , db: DatabaseHandler, dataN:  ArrayList<String>, dataQ:  ArrayList<String>,dataQS: ArrayList<Int>, ids: ArrayList<Int>,imgs: ArrayList<Bitmap?>,src1: ArrayList<String?>, src2: ArrayList<String?>, codes: ArrayList<Int?>, quantitiesInSet: ArrayList<Int>){
         this.con = context
         this.db=db
         this.dataNames = dataN
@@ -36,6 +38,7 @@ class ProjectListAdapter: BaseAdapter {
         this.src1=src1
         this.src2=src2
         this.codes=codes
+        this.quantitiesInSet=quantitiesInSet
     }
 
     override fun getCount(): Int {
@@ -98,6 +101,11 @@ class ProjectListAdapter: BaseAdapter {
                var num=text3.getText().toString().toInt()
                num+=1
                text3.setText(num.toString())
+               if(quantitiesInSet[position]==num){
+                   convertView!!.setBackgroundColor(Color.YELLOW)
+               }else{
+                   convertView!!.setBackgroundColor(Color.WHITE)
+               }
            }
        }
        btnMinus.setOnClickListener{
@@ -105,9 +113,16 @@ class ProjectListAdapter: BaseAdapter {
                var num=text3.getText().toString().toInt()
                num-=1
                text3.setText(num.toString())
+               if(quantitiesInSet[position]==num){
+                   convertView!!.setBackgroundColor(Color.YELLOW)
+               }else{
+                   convertView!!.setBackgroundColor(Color.WHITE)
+               }
            }
        }
-
+       if(quantitiesInSet[position]==text3.getText().toString().toInt()){
+           convertView!!.setBackgroundColor(Color.YELLOW)
+       }
         return convertView
     }
 }

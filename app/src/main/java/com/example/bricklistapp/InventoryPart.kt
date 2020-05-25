@@ -56,23 +56,5 @@ class InventoryPart {
         this.extra = extra
     }
 
-    constructor(
-        inventoryID: Int,
-        typeID: String,
-        itemID: String,
-        quantityInSet: Int,
-        quantityInStore: Int,
-        colorID: Int,
-        extra: String
-    ) {
-        this.inventoryID = inventoryID
-        this.typeID = typeID
-        this.itemID = itemID
-        this.quantityInSet = quantityInSet
-        this.quantityInStore = quantityInStore
-        this.colorID = colorID
-        this.extra = extra
-    }
-
     constructor()
 }

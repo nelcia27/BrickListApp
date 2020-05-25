@@ -1,7 +1,6 @@
 package com.example.bricklistapp
 
 import android.annotation.SuppressLint
-import android.content.ClipData
 import android.content.Intent
 import android.os.AsyncTask
 import androidx.appcompat.app.AppCompatActivity
@@ -13,10 +12,8 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
-import java.io.IOException
 import java.lang.Exception
 import java.net.URL
-import java.sql.SQLException
 import javax.xml.parsers.DocumentBuilderFactory
 
 class NewProject : AppCompatActivity() {
@@ -103,18 +100,14 @@ class NewProject : AppCompatActivity() {
 
         override fun doInBackground(vararg params: String?): String {
             if (name != null && urlPost != null) {
-                if (urlInventory != null) {
-                    try {
-                        val url_ = URL(urlInventory)
-                        val builderFactory = DocumentBuilderFactory.newInstance()
-                        val docBuilder = builderFactory.newDocumentBuilder()
-                        doc = docBuilder.parse(InputSource(url_.openStream()))
-                        return "OK"
-                    } catch (e: Exception) {
-                        return e.message.toString()
-                    }
-                }else {
-                    return "NOT"
+                try {
+                    val url_ = URL(urlInventory)
+                    val builderFactory = DocumentBuilderFactory.newInstance()
+                    val docBuilder = builderFactory.newDocumentBuilder()
+                    doc = docBuilder.parse(InputSource(url_.openStream()))
+                    return "OK"
+                } catch (e: Exception) {
+                    return e.message.toString()
                 }
             }else{
                 return "NOT"
@@ -122,7 +115,7 @@ class NewProject : AppCompatActivity() {
         }
 
         private fun xmlloader(document: Document) :String{
-            if(db.checkIfInventoryExists(name!!)==false) {
+            if(!db.checkIfInventoryExists(name!!)) {
                 try {
                     val inventory = Inventory(db.maxInventoryNum() + 1, name!!, 1, 0)
                     try {
@@ -184,9 +177,6 @@ class NewProject : AppCompatActivity() {
             }
             return "NOT"
         }
-
-
-
 
     }
 }

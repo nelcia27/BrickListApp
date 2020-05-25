@@ -1,5 +1,6 @@
 package com.example.bricklistapp
 
+import android.content.Intent
 import android.graphics.Bitmap
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -30,30 +31,37 @@ class ProjectActivity : AppCompatActivity() {
         name= intent.extras!!.getString("name")
         onlyNew=intent.extras!!.getString("onlyNew")
         parts=db!!.prepareToShowProject(name!!)
-        val dataNames : ArrayList<String> =ArrayList<String>()
-        val dataQuantities : ArrayList<String> =ArrayList<String>()
-        val dataQuantitiesStore: ArrayList<Int> =ArrayList<Int>()
-        val ids: ArrayList<Int> =ArrayList<Int>()
-        val imgsSrc: ArrayList<String?> = ArrayList<String?>()
-        val imgsSrcLastChance: ArrayList<String?> = ArrayList<String?>()
-        val images: ArrayList<Bitmap?> = ArrayList<Bitmap?>()
-        val codes: ArrayList<Int?> = ArrayList<Int?>()
+        val dataNames : ArrayList<String> =ArrayList()
+        val dataQuantities : ArrayList<String> =ArrayList()
+        val dataQuantitiesStore: ArrayList<Int> =ArrayList()
+        val quantitiesSet: ArrayList<Int> = ArrayList()
+        val ids: ArrayList<Int> =ArrayList()
+        val imgsSrc: ArrayList<String?> = ArrayList()
+        val imgsSrcLastChance: ArrayList<String?> = ArrayList()
+        val images: ArrayList<Bitmap?> = ArrayList()
+        val codes: ArrayList<Int?> = ArrayList()
         for(i in parts){
-            if(onlyNew.equals("1"))
-                i.ifNewToXML="N"
-            else
-                i.ifNewToXML="U"
-            dataNames.add(i.commentToShow!!)
-            dataQuantities.add(i.quantityToShowSet!!)
-            dataQuantitiesStore.add(i.quantityToShowStore!!)
-            ids.add(i.id!!)
-            imgsSrc.add(i.src)
-            imgsSrcLastChance.add(i.srcLastChance)
-            images.add(i.image)
-            codes.add(i.code)
+            if(i.commentToShow.equals("")){
+                val info: String="Element with itemID "+i.itemID+" and colorID "+i.colorID+" not found in database"
+                Toast.makeText(this,info, Toast.LENGTH_LONG).show()
+            }else{
+                if(onlyNew.equals("1"))
+                    i.ifNewToXML="N"
+                else
+                    i.ifNewToXML="U"
+                dataNames.add(i.commentToShow!!)
+                dataQuantities.add(i.quantityToShowSet!!)
+                dataQuantitiesStore.add(i.quantityToShowStore!!)
+                ids.add(i.id!!)
+                imgsSrc.add(i.src)
+                imgsSrcLastChance.add(i.srcLastChance)
+                images.add(i.image)
+                codes.add(i.code)
+                quantitiesSet.add(i.quantityInSet)
+            }
         }
         val listViewItems = findViewById<ListView>(R.id.elementList)
-        val adapter = ProjectListAdapter(this,db!!,dataNames,dataQuantities,dataQuantitiesStore,ids,images,imgsSrc,imgsSrcLastChance,codes)
+        val adapter = ProjectListAdapter(this,db!!,dataNames,dataQuantities,dataQuantitiesStore,ids,images,imgsSrc,imgsSrcLastChance,codes,quantitiesSet)
         listViewItems.adapter = adapter
 
         val actionbar = supportActionBar
@@ -76,9 +84,19 @@ class ProjectActivity : AppCompatActivity() {
         val id = item.getItemId()
 
         if (id == R.id.action_one) {
-            //odhardkodowac to n bo on z xmla
             writeXML(parts,name!!)
             Toast.makeText(this, "Succesfully saved", Toast.LENGTH_LONG).show()
+            return true
+        }
+        if (id == R.id.action_two) {
+            db!!.deleteInventory(name!!)
+            Toast.makeText(this, "Succesfully deleted project", Toast.LENGTH_LONG).show()
+            val intent= Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            return true
+        }
+        if (id == R.id.action_three) {
+            db!!.archivizeInventory(name!!)
             return true
         }
 
@@ -108,7 +126,7 @@ class ProjectActivity : AppCompatActivity() {
                 itemQty.appendChild(doc.createTextNode((it.quantityInSet!! - it.quantityInStore!!).toString()))
 
                 val itemCondt: Element = doc.createElement("CONDITION")
-                itemQty.appendChild(doc.createTextNode(it.ifNewToXML))
+                itemCondt.appendChild(doc.createTextNode(it.ifNewToXML))
 
                 item.appendChild(itemType)
                 item.appendChild(itemId)
