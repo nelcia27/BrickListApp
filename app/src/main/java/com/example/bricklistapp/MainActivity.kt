@@ -8,17 +8,20 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.Toast
-import androidx.core.view.get
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
     var db: DatabaseHandler?=null
     var showArchive="0"
-    var onlyNewElem="1"
+    var onlyNewElem="0"
     var url="http://fcds.cs.put.poznan.pl/MyWeb/BL/"
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         db = DatabaseHandler(this)
+        settings()
         showProjects()
         val listViewProjects = findViewById<ListView>(R.id.projectList)
         listViewProjects.setOnItemClickListener{parent, view, position, id ->
@@ -32,24 +35,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        onActivityResult(101,Activity.RESULT_OK,intent)
+        settings()
         showProjects()
     }
 
     override fun onRestart() {
         super.onRestart()
-        //onActivityResult(101,Activity.RESULT_OK,intent)
+        settings()
         showProjects()
 
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?){
-        super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == 101 && resultCode == Activity.RESULT_OK && data != null){
-            url = data.extras!!.getString("url")!!
-            showArchive=data.extras!!.getString("archive")!!
-            onlyNewElem=data.extras!!.getString("onlyNew")!!
-        }
     }
 
     fun addProject(view: View){
@@ -60,10 +54,7 @@ class MainActivity : AppCompatActivity() {
 
     fun goToSettings(view: View){
         val intent= Intent(this,SettingsActivity::class.java)
-        intent.putExtra("url",url)
-        intent.putExtra("archive",showArchive)
-        intent.putExtra("onlyNew",onlyNewElem)
-        startActivityForResult(intent,101)
+        startActivity(intent)
     }
 
     fun showProjects(){
@@ -82,5 +73,33 @@ class MainActivity : AppCompatActivity() {
         }
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, listItems)
         listViewProjects.adapter = adapter
+    }
+
+    fun settings(){
+        try{
+            val filename="opcje.txt"
+            if (FileExists(filename)){
+                val file= InputStreamReader(openFileInput(filename))
+                val br= BufferedReader(file)
+
+                var line=br.readLine()
+                val opcje=line.split(',')
+                if(opcje.size==3){
+                    url=opcje[0]
+                    showArchive=opcje[1]
+                    onlyNewElem=opcje[2]
+                }
+
+                file.close()
+
+            }
+        }catch (e: Exception){
+            Toast.makeText(this, "You use default settings which can be changed", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun FileExists(path:String):Boolean{
+        val file=baseContext.getFileStreamPath(path)
+        return file.exists()
     }
 }

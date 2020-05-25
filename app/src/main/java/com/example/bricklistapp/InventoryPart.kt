@@ -27,14 +27,12 @@ class InventoryPart {
     var colorID: Int? = null
     var extra: String? = null
     var image: Bitmap? = null
-    var imageByte: ByteArray?=null
     var src: String?=null
     var srcLastChance: String?=null
     var code: Int?=null
     var commentToShow: String? = null
     var quantityToShowSet: String? = null
     var quantityToShowStore: Int?=null
-    var ifNewToXML: String="N"
 
     constructor(
         id: Int,

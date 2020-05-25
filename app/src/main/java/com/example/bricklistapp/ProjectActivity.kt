@@ -22,14 +22,14 @@ import javax.xml.transform.stream.StreamResult
 class ProjectActivity : AppCompatActivity() {
     var db: DatabaseHandler?=null
     var name: String?=null
-    var onlyNew: String?=null
+    var onlyNew: String="0"
     var parts: ArrayList<InventoryPart> = ArrayList()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_project2)
         db = DatabaseHandler(this)
         name= intent.extras!!.getString("name")
-        onlyNew=intent.extras!!.getString("onlyNew")
+        onlyNew=intent.extras!!.getString("onlyNew")!!
         parts=db!!.prepareToShowProject(name!!)
         val dataNames : ArrayList<String> =ArrayList()
         val dataQuantities : ArrayList<String> =ArrayList()
@@ -43,12 +43,8 @@ class ProjectActivity : AppCompatActivity() {
         for(i in parts){
             if(i.commentToShow.equals("")){
                 val info: String="Element with itemID "+i.itemID+" and colorID "+i.colorID+" not found in database"
-                Toast.makeText(this,info, Toast.LENGTH_LONG).show()
+                Toast.makeText(this,info, Toast.LENGTH_SHORT).show()
             }else{
-                if(onlyNew.equals("1"))
-                    i.ifNewToXML="N"
-                else
-                    i.ifNewToXML="U"
                 dataNames.add(i.commentToShow!!)
                 dataQuantities.add(i.quantityToShowSet!!)
                 dataQuantitiesStore.add(i.quantityToShowStore!!)
@@ -84,8 +80,13 @@ class ProjectActivity : AppCompatActivity() {
         val id = item.getItemId()
 
         if (id == R.id.action_one) {
-            writeXML(parts,name!!)
-            Toast.makeText(this, "Succesfully saved", Toast.LENGTH_LONG).show()
+            val parm: String
+            if(onlyNew.equals("1"))
+                parm="U"
+            else
+                parm="N"
+            writeXML(db!!.prepareToShowProject(name!!),name!!,parm)
+            Toast.makeText(this, "Succesfully saved, in file are also elements which were not found in database", Toast.LENGTH_LONG).show()
             return true
         }
         if (id == R.id.action_two) {
@@ -103,7 +104,7 @@ class ProjectActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    fun writeXML(parts: ArrayList<InventoryPart>, inventoryName: String) {
+    fun writeXML(parts: ArrayList<InventoryPart>, inventoryName: String, saveParm: String) {
         val docBuilder: DocumentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
         val doc: Document = docBuilder.newDocument()
 
@@ -126,7 +127,7 @@ class ProjectActivity : AppCompatActivity() {
                 itemQty.appendChild(doc.createTextNode((it.quantityInSet!! - it.quantityInStore!!).toString()))
 
                 val itemCondt: Element = doc.createElement("CONDITION")
-                itemCondt.appendChild(doc.createTextNode(it.ifNewToXML))
+                itemCondt.appendChild(doc.createTextNode(saveParm))
 
                 item.appendChild(itemType)
                 item.appendChild(itemId)

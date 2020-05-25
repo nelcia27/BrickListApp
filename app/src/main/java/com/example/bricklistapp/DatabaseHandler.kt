@@ -301,14 +301,21 @@ class DatabaseHandler : SQLiteAssetHelper {
 
         db.close()
 
-        if(comment.equals("(Not Applicable)")){
+        if(comment.equals("")){
             invp.commentToShow=""
             invp.quantityToShowSet=""
             invp.quantityToShowStore=0
+        }else if(comment1.equals("(Not Applicable)")){
+            invp.commentToShow=comment+" ["+invp.itemID+"]"
+            invp.quantityToShowSet=" of "+invp.quantityInSet.toString()
+            invp.quantityToShowStore=invp.quantityInStore
         }
-        invp.commentToShow=comment+" "+comment1+" ["+invp.itemID+"]"
-        invp.quantityToShowSet=" of "+invp.quantityInSet.toString()
-        invp.quantityToShowStore=invp.quantityInStore
+        else{
+            invp.commentToShow=comment+" "+comment1+" ["+invp.itemID+"]"
+            invp.quantityToShowSet=" of "+invp.quantityInSet.toString()
+            invp.quantityToShowStore=invp.quantityInStore
+        }
+
 
         return invp
     }
@@ -320,7 +327,7 @@ class DatabaseHandler : SQLiteAssetHelper {
         var listToShow: ArrayList<InventoryPart> = ArrayList<InventoryPart>()
         if (cursor.moveToFirst()) {
             val code = cursor.getInt(0)
-            val query1 = "SELECT * FROM InventoriesParts where InventoryID=" + code+" ORDER BY QuantityInStore,QuantityInSet"
+            val query1 = "SELECT * FROM InventoriesParts where InventoryID=" + code+" ORDER BY QuantityInSet,QuantityInStore"
             val cursor1 = db.rawQuery(query1, null)
             if (cursor1.moveToFirst()) {
                 var invp = InventoryPart(
